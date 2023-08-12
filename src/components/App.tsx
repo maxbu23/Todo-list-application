@@ -1,22 +1,43 @@
 import React from "react";
 import {connect} from 'react-redux';
-import {Todo, fetchTodos} from '../actions';
+import {Todo, deleteTodo, fetchTodos} from '../actions';
 import {StoreState} from '../reducers';
 
 interface AppProps {
     todos: Todo[];
-    fetchTodos: any;
+    fetchTodos: Function;
+    deleteTodo: typeof deleteTodo;
 }
 
-export class _App extends React.Component<AppProps> {
-    
+interface AppState {
+    loading: boolean;
+}
+
+export class _App extends React.Component<AppProps, AppState> {
+
+    constructor(props: AppProps) {
+        super(props);
+        this.state = {loading: false};
+    }
+
     onButtonClick = (): void => {
         this.props.fetchTodos();
+        this.setState({loading: true});
     }
     
+    componentDidUpdate(prevProps: AppProps): void {
+        if(!prevProps.todos.length && this.props.todos.length) {
+            this.setState({loading: false});
+        }
+    }
+
+    onTodoClick = (id: number): void => {
+        this.props.deleteTodo(id);
+    } 
+
     renderList(): JSX.Element[] {
         return this.props.todos.map((todo: Todo) => {
-            return <div key={todo.id}>{todo.title}</div>;
+            return <div onClick={() => this.onTodoClick(todo.id)} key={todo.id}>{todo.title}</div>;
         });
     }
 
@@ -24,6 +45,7 @@ export class _App extends React.Component<AppProps> {
         return(
             <div>
                 <button onClick={this.onButtonClick}>GET TODO LIST</button> 
+                {this.state.loading ? '...' : null}
                 {this.renderList()}
             </div>
         );
@@ -36,5 +58,5 @@ const mapStateToProps =  ({todos}: StoreState): {todos: Todo[]} => {
 
 export const App = connect(
     mapStateToProps,
-    { fetchTodos }
+    { fetchTodos, deleteTodo }
 )(_App);
